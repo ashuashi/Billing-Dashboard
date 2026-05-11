@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ledger — Billing portal</title>
+<style>
+  :root{
+    --cream:#FAF6EC; --green:#0F4C36; --green-deep:#0B3B2A; --green-soft:#D9ECDF;
+    --ink:#16213A; --ink-soft:#5B6577; --card:#FFFFFF; --border:#E7E2D2;
+    --violet:#6366F1; --violet-soft:#EEF1FF; --recommend:#5B5BF0;
+    --success:#16a34a; --warning:#B58213; --danger:#DC2626;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--cream);color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  input{font:inherit;color:inherit}
+  .container{max-width:1180px;margin:0 auto;padding:0 24px}
+  /* Header */
+  header.app{background:var(--cream);border-bottom:1px solid var(--border)}
+  .navwrap{height:64px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:600}
+  .brand .dot{width:32px;height:32px;border-radius:999px;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center}
+  nav.tabs{display:flex;gap:4px;margin-left:24px}
+  nav.tabs a{padding:8px 16px;border-radius:999px;font-weight:500;color:var(--ink-soft)}
+  nav.tabs a.active{background:var(--green-soft);color:var(--green-deep)}
+  .right{display:flex;align-items:center;gap:12px}
+  .role{display:inline-flex;background:var(--card);border:1px solid var(--border);padding:4px;border-radius:999px;font-size:12px;font-weight:600}
+  .role button{padding:4px 12px;border-radius:999px;color:var(--ink-soft)}
+  .role button.active{background:var(--green);color:#fff}
+  .avatar{width:36px;height:36px;border-radius:999px;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:12px}
+  main{padding:32px 0;min-height:calc(100vh - 140px)}
+  footer{padding:24px 0;color:var(--ink-soft);font-size:12px}
+  h1{font-size:30px;margin:4px 0 0;font-weight:600}
+  /* Cards */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+  .grid{display:grid;gap:16px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .muted{color:var(--ink-soft)} .small{font-size:12px} .xs{font-size:11px}
+  .uc{text-transform:uppercase;letter-spacing:.06em;font-size:11px;color:var(--ink-soft);font-weight:600}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
+  .pill.paid{background:var(--green-soft);color:var(--green-deep)}
+  .pill.unpaid{background:#FBEED1;color:var(--warning)}
+  .pill.overdue{background:#FCDADA;color:var(--danger)}
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border-radius:999px;font-weight:600;font-size:13px;transition:.15s}
+  .btn.primary{background:var(--green);color:#fff}
+  .btn.primary:hover{opacity:.95}
+  .btn.ghost{background:var(--card);border:1px solid var(--border);color:var(--ink)}
+  .btn.ghost:hover{background:#F4EFE0}
+  .btn.violet{background:var(--violet);color:#fff}
+  .btn.violet-outline{background:var(--card);border:1px solid var(--violet);color:var(--violet)}
+  .btn.violet-outline:hover{background:var(--violet-soft)}
+  /* Hero */
+  .hero{background:linear-gradient(135deg,var(--green-deep),var(--green));color:#fff;border-radius:24px;padding:32px}
+  .hero .amt{font-size:48px;font-weight:600;margin-top:8px}
+  .hero .due{margin-top:12px;color:#FFFFFFCC;font-size:13px}
+  .hero .actions{display:flex;gap:12px}
+  .hero .btn{padding:10px 20px}
+  .hero .btn.white{background:#fff;color:var(--green-deep)}
+  .hero .btn.outline{background:transparent;border:1px solid #ffffff66;color:#fff}
+  /* Metric tiles */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:24px}
+  .tile{padding:20px}
+  .tile .v{font-size:24px;font-weight:700;margin-top:8px}
+  .tile.clickable{cursor:pointer;transition:.15s;text-align:left;width:100%}
+  .tile.clickable:hover{box-shadow:0 1px 6px rgba(0,0,0,.04)}
+  .tile.active{border-color:var(--violet);box-shadow:0 0 0 2px rgba(99,102,241,.25)}
+  .progress{height:6px;background:#EFE9D8;border-radius:999px;overflow:hidden;margin-top:10px}
+  .progress > i{display:block;height:100%;background:var(--green);border-radius:999px}
+  /* Quick links */
+  .links{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+  .link{padding:20px;display:flex;align-items:center;justify-content:space-between}
+  /* Calculator */
+  .calc{margin-top:24px;background:rgba(247,242,225,.6);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+  .calc h2{margin:0 0 14px;font-size:18px;font-weight:600}
+  .controls{display:grid;grid-template-columns:3fr 5fr 4fr;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+  .ctrl{background:#F2EEDD80;border-radius:12px;padding:12px}
+  .ctrl .lbl{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-soft);font-weight:600}
+  .ctrl input.seg{width:100%;text-align:center;font-size:24px;font-weight:600;background:transparent;border:0;outline:0;margin-top:4px}
+  .ctrl .submit{margin-top:8px;width:100%;padding:8px;border-radius:10px;background:var(--violet);color:#fff;font-weight:500}
+  .api-row{display:flex;align-items:flex-end;justify-content:space-between;margin-top:12px}
+  .api-add{height:28px;width:28px;border-radius:8px;background:var(--violet-soft);color:var(--violet);font-weight:700;font-size:18px;line-height:1}
+  .api-count{display:inline-flex;align-items:center;justify-content:center;height:20px;min-width:20px;padding:0 6px;background:var(--card);border:1px solid var(--border);border-radius:6px;font-size:11px;margin-left:6px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chip{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;background:var(--card);border:1px solid var(--border);color:var(--ink-soft);display:inline-flex;align-items:center;gap:6px}
+  .chip.sel{background:var(--violet-soft);border-color:var(--violet);color:var(--violet)}
+  .chip .rad{width:8px;height:8px;border-radius:999px;border:1.5px solid var(--ink-soft)}
+  .chip.sel .rad{border:0;background:var(--violet)}
+  .addons{display:flex;gap:16px;margin-top:12px}
+  .addons label{display:inline-flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;user-select:none}
+  .cb{width:16px;height:16px;border-radius:5px;border:1px solid var(--border);background:var(--card);display:inline-flex;align-items:center;justify-content:center;color:#fff}
+  .cb.on{background:var(--violet);border-color:var(--violet)}
+  /* S1 Options */
+  .s1{margin-top:20px;background:var(--card);border:1px solid var(--border);border-radius:16px}
+  .s1 .head{padding:18px 20px 6px;font-weight:600}
+  .onetime{margin:0 20px;background:#F2EEDD80;border:1px solid var(--border);border-radius:12px}
+  .onetime .top{padding:12px 16px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .onetime .top .icon{width:28px;height:28px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;color:var(--violet)}
+  .onetime .top .center{flex:1;text-align:center}
+  .onetime .body{padding:0 16px 12px;border-top:1px solid #E7E2D280}
+  .onetime .body .ln{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #E7E2D260}
+  .onetime .body .ln:last-child{border-bottom:0}
+  .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:20px}
+  .opt{position:relative;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+  .opt.rec{border-color:var(--violet);box-shadow:0 0 0 2px rgba(99,102,241,.18)}
+  .opt .badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--recommend);color:#fff;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,.08);display:flex;align-items:center;gap:4px}
+  .opt .lbl{font-size:13px;font-weight:600}
+  .opt .mc{font-size:12px;color:var(--violet);font-weight:500;margin-top:8px}
+  .opt .mv{font-size:28px;font-weight:700;color:var(--violet);margin-top:4px}
+  .opt section{border-top:1px solid #E7E2D280;padding-top:10px;margin-top:14px}
+  .opt section .toggle{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  .opt section .lns{margin-top:8px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+  .opt section .ln{display:flex;justify-content:space-between}
+  .opt .tri{display:inline-block;width:8px;height:8px;border-left:5px solid var(--ink-soft);border-top:5px solid transparent;border-bottom:5px solid transparent;margin-right:6px;transition:transform .15s}
+  .opt .open .tri{transform:rotate(90deg)}
+  .opt .tag-free{color:var(--success);font-size:11px}
+  .opt .neg{color:var(--success)}
+  .opt .add{display:grid;grid-template-columns:1fr auto auto;gap:10px;font-size:13px}
+  .choose{margin-top:14px;width:100%;padding:10px;border-radius:12px;font-weight:600;font-size:13px}
+  .choose.recb{background:var(--violet);color:#fff}
+  .choose.norm{background:var(--card);color:var(--violet);border:1px solid var(--violet)}
+  /* Billing list */
+  .tabbar{display:inline-flex;background:#EEE9D6;padding:4px;border-radius:999px}
+  .tabbar button{padding:6px 16px;border-radius:999px;font-size:13px;font-weight:500;color:var(--ink-soft)}
+  .tabbar button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .search{border:1px solid var(--border);background:var(--card);padding:8px 16px;border-radius:999px;outline:0;width:280px}
+  .group{margin-top:16px;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .group .gh{padding:12px 20px;border-bottom:1px solid #E7E2D280;display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);text-transform:uppercase;font-weight:600}
+  .invrow{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;width:100%;text-align:left}
+  .invrow:hover{background:#F4EFE0}
+  .invrow .left{display:flex;gap:14px;align-items:center}
+  .invrow .num{font-family:ui-monospace,monospace;font-size:13px}
+  .invexp{padding:12px 20px 24px;background:#F4EFE080;border-top:1px solid #E7E2D260}
+  /* Invoice detail */
+  .ihero{padding:24px;display:flex;justify-content:space-between;align-items:flex-start}
+  .ihero .num{font-family:ui-monospace,monospace;font-size:24px;font-weight:700;margin-top:4px}
+  .imeta{padding:16px 24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  table.lines{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+  table.lines th{background:#F2EEDD;text-align:left;padding:8px 12px;font-size:11px;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  table.lines th:first-child{border-radius:8px 0 0 8px} table.lines th:last-child{border-radius:0 8px 8px 0;text-align:right}
+  table.lines th.r,table.lines td.r{text-align:right}
+  table.lines td{padding:12px;border-bottom:1px solid #E7E2D260}
+  .totals{margin:16px 0 0 auto;max-width:280px;font-size:13px}
+  .totals .ln{display:flex;justify-content:space-between;padding:4px 0}
+  .totals .grand{font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:4px}
+  /* Plans */
+  .plan{padding:24px;position:relative}
+  .plan.cur{border-color:var(--green);box-shadow:0 0 0 2px rgba(15,76,54,.2)}
+  .plan .price{font-size:36px;font-weight:700}
+  .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  ul.feat{list-style:none;padding:0;margin:16px 0 0;display:flex;flex-direction:column;gap:8px;font-size:13px}
+  ul.feat li{display:flex;gap:8px}
+  ul.feat svg{flex-shrink:0;color:var(--green);margin-top:2px}
+  /* Pay */
+  .paywrap{max-width:540px;margin:0 auto}
+  .paydone{text-align:center;padding:24px}
+  .paydone .ok{width:56px;height:56px;border-radius:999px;background:var(--green-soft);color:var(--green-deep);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px}
+  /* responsive */
+  @media (max-width:900px){
+    .tiles{grid-template-columns:repeat(2,1fr)}
+    .links,.imeta,.controls,.opts,.plans-grid{grid-template-columns:1fr !important}
+    nav.tabs{display:none}
+  }
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="container navwrap">
+    <div style="display:flex;align-items:center">
+      <a href="#/" class="brand"><span class="dot">≡</span> Ledger</a>
+      <nav class="tabs" id="nav"></nav>
+    </div>
+    <div class="right">
+      <div class="role" id="role"></div>
+      <div class="avatar">AC</div>
+    </div>
+  </div>
+</header>
+<main><div class="container" id="app"></div></main>
+<footer><div class="container">Ledger · Billing portal · INR</div></footer>
+
+<script>
+/* ============== DATA ============== */
+const COMPANY = { name:"Acme Pvt Ltd", email:"billing@acme.in" };
+const PLAN = { code:"P1", base:10000, baseAllocation:1000, overageRate:5, segmentsUsed:1240, nextBill:"31 May 2026", lastPayment:{amount:10000,date:"02 Apr 2026",status:"Succeeded"} };
+const INVOICES = [
+  { id:14, number:"INV-2026-05-014", monthLabel:"May 2026", issueDate:"4 May 2026", dueDate:"14 May 2026", status:"Unpaid", segments:1490, baseAllocation:1000, basePrice:10000, overageRate:5 },
+  { id:13, number:"INV-2026-04-013", monthLabel:"April 2026", issueDate:"4 Apr 2026", dueDate:"14 Apr 2026", status:"Paid", segments:1000, baseAllocation:1000, basePrice:10000, overageRate:5 },
+  { id:12, number:"INV-2026-03-012", monthLabel:"March 2026", issueDate:"4 Mar 2026", dueDate:"14 Mar 2026", status:"Paid", segments:1240, baseAllocation:1000, basePrice:10000, overageRate:5 },
+  { id:11, number:"INV-2026-02-011", monthLabel:"February 2026", issueDate:"4 Feb 2026", dueDate:"14 Feb 2026", status:"Paid", segments:1000, baseAllocation:1000, basePrice:10000, overageRate:5 },
+  { id:10, number:"INV-2026-01-010", monthLabel:"January 2026", issueDate:"4 Jan 2026", dueDate:"14 Jan 2026", status:"Paid", segments:1620, baseAllocation:1000, basePrice:10000, overageRate:5 },
+  { id:9,  number:"INV-2025-12-009", monthLabel:"December 2025", issueDate:"4 Dec 2025", dueDate:"14 Dec 2025", status:"Paid", segments:1000, baseAllocation:1000, basePrice:10000, overageRate:5 },
+];
+const PLANS = [
+  { code:"P1", name:"Plan P1", price:10000, base:1000, overage:5, blurb:"Up to 1,000 segments included per cycle. Overage at ₹5/segment.", features:["1,000 segments included","₹5 per overage segment","Email support","Monthly billing"], current:true, badge:"Current plan" },
+  { code:"P2", name:"Plan P2", price:25000, base:3000, overage:4, blurb:"Coming soon — for growing teams.", features:["3,000 segments included","₹4 per overage segment","Priority support","Quarterly billing option"], current:false, badge:"Coming soon" },
+  { code:"P3", name:"Plan P3", price:75000, base:10000, overage:3, blurb:"Coming soon — enterprise scale.", features:["10,000 segments included","₹3 per overage segment","Dedicated CSM","Custom SLAs"], current:false, badge:"Coming soon" },
+];
+function invoiceTotal(i){ return i.basePrice + Math.max(0,i.segments-i.baseAllocation)*i.overageRate; }
+function getInvoice(id){ return INVOICES.find(i=>i.id===Number(id)); }
+
+/* ============== PRICING ============== */
+const SETUP_COST=150000, API_UNIT_COST=250000;
+const FREE_SEGMENTS=[2000,1000,0], PER_SEGMENT_RATE=[10,12.5,15];
+const PRODUCTS=["BOA","B2C","B2E","B2B"], ADDONS=["CRM","Tally"];
+const PRODUCT_RATE={ BOA:[15000,7500,5000], B2B:[10000,7500,5000], B2E:[10000,7500,5000], B2C:[10000,7500,5000] };
+function compute({segments,apis,products,addons}){
+  const apiCost=apis*API_UNIT_COST, oneTimeCost=SETUP_COST+apiCost;
+  const boaLabel = products.includes("BOA") && addons.length ? "BOA( "+["BE",...addons.map(a=>a.toUpperCase())].join("+ ")+" )" : "BOA";
+  const options=[0,1,2].map(i=>{
+    const productRows=products.map(p=>({product:p, cost:PRODUCT_RATE[p][i], label:p==="BOA"?boaLabel:p}));
+    const productCost=productRows.reduce((s,r)=>s+r.cost,0);
+    const free=FREE_SEGMENTS[i], add=Math.max(0,segments-free), rate=PER_SEGMENT_RATE[i];
+    const segmentCost=add*rate;
+    return {index:i,label:`S1 - Option ${i+1}`,productCost,productRows,segments,freeSegments:free,addSegments:add,perSegmentRate:rate,segmentCost,monthlyCost:productCost+segmentCost,recommended:false};
+  });
+  let best=1, bv=options[1].monthlyCost;
+  [0,2].forEach(i=>{ if(options[i].monthlyCost<bv){bv=options[i].monthlyCost;best=i;} });
+  options[best].recommended=true;
+  return {setupCost:SETUP_COST,apiCost,oneTimeCost,options,recommendedIndex:best};
+}
+function fINR(n){ if(!isFinite(n)) return "₹0"; const sign=n<0?"-":""; const x=Math.abs(Math.round(n*100)/100); const [a,b]=x.toString().split("."); const last3=a.slice(-3), rest=a.slice(0,-3); const g=(rest?rest.replace(/\B(?=(\d{2})+(?!\d))/g,",")+",":"")+last3; return `${sign}₹${g}${b?"."+b:""}`; }
+function fNum(n){ return Number(n).toLocaleString("en-IN"); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ============== ROUTING / STATE ============== */
+const state = { role:"Client" };
+window.addEventListener("hashchange", render);
+window.addEventListener("DOMContentLoaded", render);
+
+function render(){
+  if(!location.hash) location.hash="#/";
+  renderHeader();
+  const h = location.hash.slice(1);
+  const app = document.getElementById("app");
+  if(h==="/" || h==="") app.innerHTML = renderDashboard();
+  else if(h==="/billing") app.innerHTML = renderBilling();
+  else if(h.startsWith("/billing/pay/")) app.innerHTML = renderPay(h.split("/").pop());
+  else if(h.startsWith("/billing/")) app.innerHTML = renderInvoice(h.split("/").pop());
+  else if(h==="/upgrade") app.innerHTML = renderUpgrade();
+  else app.innerHTML = `<div class="card" style="padding:48px;text-align:center"><h1>404</h1><p class="muted">Page not found.</p><a class="btn primary" href="#/">Go home</a></div>`;
+  attachHandlers();
+}
+
+function renderHeader(){
+  const path = location.hash.slice(1) || "/";
+  const items=[["/","Dashboard"],["/billing","View Billing"],["/upgrade","Upgrade"]];
+  document.getElementById("nav").innerHTML = items.map(([h,l])=>{
+    const active = h==="/" ? path==="/" : path===h || path.startsWith(h+"/");
+    return `<a href="#${h}" class="${active?"active":""}">${l}</a>`;
+  }).join("");
+  document.getElementById("role").innerHTML = ["Client","Admin"].map(r=>`<button data-role="${r}" class="${state.role===r?"active":""}">${r}</button>`).join("");
+}
+function attachHandlers(){
+  document.querySelectorAll("[data-role]").forEach(b=>b.onclick=()=>{ state.role=b.dataset.role; render(); });
+}
+
+/* ============== DASHBOARD ============== */
+function renderDashboard(){
+  if(state.role==="Admin") return renderAdmin();
+  const due = INVOICES.find(i=>i.status==="Unpaid");
+  const dueAmt = invoiceTotal(due);
+  const overage = Math.max(0, PLAN.segmentsUsed - PLAN.baseAllocation);
+  const usagePct = Math.min(100, PLAN.segmentsUsed / PLAN.baseAllocation * 100);
+  setTimeout(()=>{
+    const calcMount = document.getElementById("calc-mount");
+    const tile = document.getElementById("plan-tile");
+    let open=false;
+    tile.onclick=()=>{
+      open=!open;
+      tile.classList.toggle("active",open);
+      tile.querySelector(".cta").textContent = open?"Hide fare breakup ▴":"View fare breakup ▾";
+      calcMount.innerHTML = open ? renderCalc({segments:PLAN.segmentsUsed},{compact:true}) : "";
+      if(open) wireCalc(calcMount);
+    };
+  },0);
+  return `
+    <div class="muted small">Welcome back, ${COMPANY.name}</div>
+    <h1>Dashboard</h1>
+    <div class="hero" style="margin-top:24px">
+      <div class="row" style="align-items:flex-end;flex-wrap:wrap;gap:24px">
+        <div>
+          <div class="uc" style="color:#ffffffb3">Amount due this cycle</div>
+          <div class="amt">${fINR(dueAmt)}</div>
+          <div class="due">Invoice ${due.number} · Due ${due.dueDate}</div>
+        </div>
+        <div class="actions">
+          <a class="btn white" href="#/billing/pay/${due.id}">Pay now →</a>
+          <a class="btn outline" href="#/billing/${due.id}">View invoice</a>
+        </div>
+      </div>
+    </div>
+    <div class="tiles">
+      <button id="plan-tile" class="card tile clickable">
+        <div class="uc">Plan</div>
+        <div class="v">${PLAN.code}</div>
+        <div class="muted small">₹${fNum(PLAN.base)} base</div>
+        <div class="cta xs" style="color:var(--violet);font-weight:700;margin-top:8px">View fare breakup ▾</div>
+      </button>
+      <div class="card tile">
+        <div class="uc">Segments used</div>
+        <div class="v">${fNum(PLAN.segmentsUsed)} / ${fNum(PLAN.baseAllocation)}</div>
+        <div class="xs" style="color:var(--warning)">+${overage} overage</div>
+        <div class="progress"><i style="width:${usagePct}%"></i></div>
+      </div>
+      <div class="card tile">
+        <div class="uc">Next bill</div>
+        <div class="v">${PLAN.nextBill}</div>
+        <div class="muted small">Auto-generated</div>
+      </div>
+      <div class="card tile">
+        <div class="uc">Last payment</div>
+        <div class="v">₹${fNum(PLAN.lastPayment.amount)}</div>
+        <div class="xs" style="color:var(--success)">${PLAN.lastPayment.date} · ${PLAN.lastPayment.status}</div>
+      </div>
+    </div>
+    <div id="calc-mount"></div>
+    <div class="links">
+      <div class="card link"><div><div style="font-weight:600">Need more capacity?</div><div class="muted small">Review Plan ${PLAN.code} and upcoming tiers.</div></div><a class="btn ghost" href="#/upgrade">Upgrade plan →</a></div>
+      <div class="card link"><div><div style="font-weight:600">Past invoices</div><div class="muted small">${INVOICES.length} invoices issued this year.</div></div><a class="btn ghost" href="#/billing">View all invoices →</a></div>
+    </div>
+  `;
+}
+function renderAdmin(){
+  const open = INVOICES.filter(i=>i.status!=="Paid").length;
+  const billed = INVOICES.reduce((s,i)=>s+invoiceTotal(i),0);
+  return `
+    <div class="muted small">Admin overview</div><h1>Operations</h1>
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card tile"><div class="uc">Open invoices</div><div class="v" style="font-size:32px">${open}</div></div>
+      <div class="card tile"><div class="uc">Total billed (year)</div><div class="v" style="font-size:32px">${fINR(billed)}</div></div>
+      <div class="card tile"><div class="uc">Active customers</div><div class="v" style="font-size:32px">1</div></div>
+    </div>
+    <div style="margin-top:24px"><a class="btn primary" href="#/billing">Manage invoices →</a></div>
+  `;
+}
+
+/* ============== BILLING LIST ============== */
+function renderBilling(){
+  setTimeout(()=>wireBilling(),0);
+  return `
+    <h1>Invoices</h1><p class="muted small" style="margin-top:4px">All invoices grouped by billing month.</p>
+    <div class="row" style="margin-top:24px;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div class="tabbar" id="tabbar">
+        ${["All","Unpaid","Paid","Overdue"].map((t,i)=>`<button data-tab="${t}" class="${i===0?"on":""}">${t}</button>`).join("")}
+      </div>
+      <input id="qsearch" class="search" placeholder="Search invoice number..." />
+    </div>
+    <div id="invlist"></div>
+  `;
+}
+function wireBilling(){
+  let tab="All", q="";
+  function paint(){
+    const filtered = INVOICES.filter(i => (tab==="All"||i.status===tab) && (!q || i.number.toLowerCase().includes(q.toLowerCase())));
+    const groups=[]; filtered.forEach(i=>{ const last=groups[groups.length-1]; if(last&&last.month===i.monthLabel) last.items.push(i); else groups.push({month:i.monthLabel,items:[i]}); });
+    const html = groups.length===0 ? `<div class="card" style="padding:40px;text-align:center;margin-top:16px" class="muted">No invoices match.</div>`
+      : groups.map(g=>`
+        <div class="group">
+          <div class="gh"><span>${g.month}</span><span>${g.items.length} invoice${g.items.length!==1?"s":""} · ${fINR(g.items.reduce((s,i)=>s+invoiceTotal(i),0))}</span></div>
+          <ul style="list-style:none;margin:0;padding:0">${g.items.map(inv=>`
+            <li>
+              <button class="invrow" data-toggle="${inv.id}">
+                <div class="left"><span class="num">${inv.number}</span><span class="pill ${inv.status.toLowerCase()}">• ${inv.status}</span></div>
+                <div style="display:flex;gap:24px;align-items:center">
+                  <span class="muted small">Due ${inv.dueDate}</span>
+                  <span style="font-weight:600">${fINR(invoiceTotal(inv))}</span>
+                  <span class="xs" style="color:var(--violet);font-weight:700" data-cta="${inv.id}">Fare breakup ▾</span>
+                </div>
+              </button>
+              <div id="exp-${inv.id}"></div>
+            </li>`).join("")}</ul>
+        </div>`).join("");
+    document.getElementById("invlist").innerHTML = html;
+    document.querySelectorAll("[data-toggle]").forEach(b=>{
+      const id = b.dataset.toggle;
+      b.onclick=()=>{
+        const exp=document.getElementById("exp-"+id);
+        const cta=document.querySelector(`[data-cta="${id}"]`);
+        if(exp.innerHTML){ exp.innerHTML=""; cta.textContent="Fare breakup ▾"; }
+        else {
+          const inv=getInvoice(id);
+          exp.innerHTML = `<div class="invexp">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><a href="#/billing/${inv.id}" style="font-size:12px;color:var(--green-deep);font-weight:600">Open full invoice →</a></div>
+            ${renderCalc({segments:inv.segments},{compact:true})}
+          </div>`;
+          wireCalc(exp);
+          cta.textContent="Hide breakup ▴";
+        }
+      };
+    });
+  }
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
+    document.querySelectorAll("[data-tab]").forEach(x=>x.classList.remove("on")); b.classList.add("on"); tab=b.dataset.tab; paint();
+  });
+  document.getElementById("qsearch").oninput=e=>{ q=e.target.value; paint(); };
+  paint();
+}
+
+/* ============== INVOICE DETAIL ============== */
+function renderInvoice(id){
+  const inv=getInvoice(id);
+  if(!inv) return `<div class="card" style="padding:40px;text-align:center"><h1>404</h1><p class="muted">Invoice not found.</p><a class="btn primary" href="#/billing">Back</a></div>`;
+  const overage=Math.max(0,inv.segments-inv.baseAllocation);
+  const overageTotal=overage*inv.overageRate;
+  const total=invoiceTotal(inv);
+  setTimeout(()=>wireCalc(document.getElementById("inv-calc")),0);
+  return `
+    <a href="#/billing" class="muted small">← Back to invoices</a>
+    <div class="card" style="border-radius:24px;margin-top:16px;overflow:hidden">
+      <div class="ihero">
+        <div>
+          <div class="uc">Invoice</div>
+          <div class="num">${inv.number}</div>
+          <span class="pill ${inv.status.toLowerCase()}" style="margin-top:12px">• ${inv.status}</span>
+        </div>
+        <div style="text-align:right">
+          <div class="uc">Amount due</div>
+          <div style="font-size:30px;font-weight:700;margin-top:4px">${fINR(total)}</div>
+          <div class="muted small">Due ${inv.dueDate}</div>
+        </div>
+      </div>
+      <div class="imeta">
+        <div><div class="uc">Bill to</div><div style="font-weight:600;margin-top:4px">${COMPANY.name}</div><div class="muted small">${COMPANY.email}</div></div>
+        <div><div class="uc">Issue date</div><div style="font-weight:600;margin-top:4px">${inv.issueDate}</div></div>
+        <div><div class="uc">Due date</div><div style="font-weight:600;margin-top:4px">${inv.dueDate}</div></div>
+      </div>
+      <div style="padding:24px">
+        <div class="uc" style="margin-bottom:12px">Line items</div>
+        <table class="lines">
+          <thead><tr><th>Description</th><th class="r">Segments</th><th class="r">Unit cost</th><th class="r">Total</th></tr></thead>
+          <tbody>
+            <tr><td>Plan ${PLAN.code} — base allocation</td><td class="r">${fNum(inv.baseAllocation)}</td><td class="r">${fINR(inv.basePrice)}</td><td class="r">${fINR(inv.basePrice)}</td></tr>
+            <tr><td>Overage segments</td><td class="r">${overage}</td><td class="r">₹${inv.overageRate}</td><td class="r">${fINR(overageTotal)}</td></tr>
+          </tbody>
+        </table>
+        <div class="totals">
+          <div class="ln"><span class="muted">Subtotal</span><span>${fINR(total)}</span></div>
+          <div class="ln"><span class="muted">Tax</span><span>₹0</span></div>
+          <div class="ln grand"><span>Total</span><span>${fINR(total)}</span></div>
+        </div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div class="small muted">Total segments billed: <strong style="color:var(--ink)">${fNum(inv.segments)}</strong></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn ghost">Download PDF</button>
+          ${inv.status!=="Paid"?`<a class="btn primary" href="#/billing/pay/${inv.id}">Pay ${fINR(total)} →</a>`:""}
+        </div>
+      </div>
+    </div>
+    <div id="inv-calc" style="margin-top:24px;background:rgba(247,242,225,.6);border:1px solid var(--border);border-radius:14px;padding:20px">
+      ${renderCalc({segments:inv.segments},{compact:true})}
+    </div>
+  `;
+}
+
+/* ============== PAY ============== */
+function renderPay(id){
+  const inv=getInvoice(id);
+  if(!inv) return `<div class="card" style="padding:40px"><a href="#/billing">Back</a></div>`;
+  const total=invoiceTotal(inv);
+  setTimeout(()=>{
+    const btn=document.getElementById("pay-btn"), wrap=document.getElementById("pay-wrap");
+    btn.onclick=()=>{
+      wrap.innerHTML=`<div class="paydone"><div class="ok"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4 10-10"/></svg></div>
+        <div style="font-size:20px;font-weight:600">Payment successful</div>
+        <div class="muted small" style="margin-top:4px">${fINR(total)} paid for ${inv.number}.</div>
+        <a href="#/" class="btn primary" style="margin-top:24px">Back to dashboard</a></div>`;
+    };
+  },0);
+  return `<div class="paywrap">
+    <a href="#/billing/${inv.id}" class="muted small">← Back to invoice</a>
+    <div class="card" style="border-radius:24px;margin-top:16px;padding:32px" id="pay-wrap">
+      <div class="uc">Pay invoice</div>
+      <div style="font-family:ui-monospace,monospace;font-size:18px;margin-top:4px">${inv.number}</div>
+      <div class="muted small" style="margin-top:24px">Bill to</div>
+      <div style="font-weight:600">${COMPANY.name}</div>
+      <div class="muted small">${COMPANY.email}</div>
+      <div style="margin-top:24px;background:#F2EEDD;border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center">
+        <span class="muted small">Total due</span><span style="font-size:24px;font-weight:700">${fINR(total)}</span>
+      </div>
+      <button id="pay-btn" class="btn primary" style="margin-top:24px;width:100%;padding:14px">Pay ${fINR(total)}</button>
+      <p class="xs muted" style="text-align:center;margin-top:12px">This is a mock payment screen.</p>
+    </div>
+  </div>`;
+}
+
+/* ============== UPGRADE ============== */
+function renderUpgrade(){
+  return `
+    <h1>Choose the right plan</h1>
+    <p class="muted" style="max-width:540px;margin-top:8px">Transparent pricing with a base allocation and per-segment overage. Pay only for what you use.</p>
+    <div class="plans-grid" style="margin-top:24px">
+      ${PLANS.map(p=>`
+        <div class="card plan ${p.current?"cur":""}">
+          <span class="pill ${p.current?"paid":"unpaid"}">${p.badge}</span>
+          <div style="margin-top:12px;font-size:20px;font-weight:600">${p.name}</div>
+          <div class="muted small" style="margin-top:4px">${p.blurb}</div>
+          <div style="display:flex;align-items:flex-end;gap:4px;margin-top:20px"><span class="price">${fINR(p.price)}</span><span class="muted small" style="margin-bottom:4px">/cycle</span></div>
+          <div class="muted xs" style="margin-top:4px">${fNum(p.base)} segments included · ₹${p.overage}/overage</div>
+          <ul class="feat">${p.features.map(f=>`<li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l4 4 10-10"/></svg>${f}</li>`).join("")}</ul>
+          <button class="btn ghost" style="margin-top:24px;width:100%">${p.current?"Your current plan":"Notify me"}</button>
+        </div>`).join("")}
+    </div>
+    <div class="card" style="padding:20px;margin-top:24px">
+      <div style="font-weight:600">How pricing works</div>
+      <p class="muted small" style="margin-top:4px">Base price covers your included segments. Anything above is charged at the overage rate. Example: 1,490 segments on Plan P1 = ₹10,000 + 490 × ₹5 = <strong style="color:var(--ink)">₹12,450</strong>.</p>
+    </div>`;
+}
+
+/* ============== CALCULATOR ============== */
+function renderCalc(initial, opts){
+  const id = "c"+Math.random().toString(36).slice(2,8);
+  const compact = !!(opts && opts.compact);
+  return `<div class="calc" id="${id}" data-compact="${compact?1:0}" data-init='${JSON.stringify({segments:initial.segments||1000,apis:1,products:["BOA","B2C","B2E","B2B"],addons:["CRM","Tally"]})}'>
+    <h2>${compact?"Fare breakup":"Commercials Calculator"}</h2>
+    <div class="calc-body"></div>
+  </div>`;
+}
+function wireCalc(scope){
+  const root = scope.querySelector?.(".calc") || scope;
+  if(!root) return;
+  const st = JSON.parse(root.dataset.init);
+  const compact = root.dataset.compact === "1";
+  let draft = String(st.segments);
+  let oneOpen=true, apiOpen=false;
+  function paint(){
+    const r = compute(st);
+    const productSummary = st.products.join(" + ") + (st.addons.length?` (${st.addons.join(", ")})`:"");
+    const controlsHTML = compact ? `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:13px">
+        <span class="uc" style="color:var(--violet)">Your selection</span>
+        <span><strong>Plan ${PLAN.code}</strong></span>
+        <span class="muted">·</span>
+        <span>${fNum(st.segments)} segments</span>
+        <span class="muted">·</span>
+        <span>${st.apis} API${st.apis!==1?"s":""}</span>
+        <span class="muted">·</span>
+        <span>${esc(productSummary)}</span>
+      </div>
+    ` : `
+      <div class="controls">
+        <div class="ctrl">
+          <div class="lbl"><span style="color:var(--violet)">▦</span> Business Segment</div>
+          <input class="seg" value="${esc(draft)}" />
+          <button class="submit">Submit</button>
+        </div>
+        <div class="ctrl">
+          <div class="row">
+            <div class="lbl"><span style="color:var(--violet)">✦</span> API Configuration <span class="api-count">${st.apis}</span></div>
+            <button class="api-add">+</button>
+          </div>
+          <div class="api-row">
+            <div>
+              <div class="xs muted">Total APIs Configured</div>
+              <div style="font-size:20px;font-weight:600;margin-top:2px;display:flex;align-items:center;gap:8px">${st.apis}${st.apis>1?'<button class="api-sub" style="height:24px;width:24px;border-radius:6px;background:var(--card);border:1px solid var(--border);color:var(--ink-soft)">−</button>':""}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="xs muted">Est. API Cost</div>
+              <div style="font-size:20px;font-weight:600;margin-top:2px">${fINR(r.apiCost)}</div>
+            </div>
+          </div>
+        </div>
+        <div class="ctrl">
+          <div class="lbl">Product Selection</div>
+          <div class="chips">${PRODUCTS.map(p=>`<button class="chip ${st.products.includes(p)?"sel":""}" data-prod="${p}"><span class="rad"></span>${p}</button>`).join("")}</div>
+          <div class="addons">${ADDONS.map(a=>{const on=st.addons.includes(a);return `<label><span class="cb ${on?"on":""}">${on?'<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="3"><path d="M3 8l3 3 7-7"/></svg>':""}</span><input type="checkbox" data-addon="${a}" ${on?"checked":""} hidden>${a}</label>`}).join("")}</div>
+        </div>
+      </div>`;
+    const optionsToRender = compact ? [r.options[r.recommendedIndex]] : r.options;
+    const oneTimeLabel = compact ? "One-time charges" : "One-Time Cost (Applicable to all S1 Options)";
+    root.querySelector(".calc-body").innerHTML = `
+      ${controlsHTML}
+      <div class="s1">
+        <div class="head">${compact?"Your plan breakup":"S1 Options"}</div>
+        <div class="onetime">
+          <button class="top" data-toggle-one>
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 8l10 6 10-6-10-6Zm0 14L2 10v4l10 6 10-6v-4l-10 6Z"/></svg></span>
+            <span class="center"><div class="xs muted">${oneTimeLabel}</div><div style="font-size:20px;font-weight:600;margin-top:2px">${fINR(r.oneTimeCost)}</div></span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="${oneOpen?"transform:rotate(180deg)":""}"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          ${oneOpen?`<div class="body">
+            <div class="ln"><span class="muted">Setup Cost</span><span style="font-weight:500">${fINR(r.setupCost)}</span></div>
+            <div class="ln" style="display:block">
+              <button data-toggle-api style="width:100%;display:flex;justify-content:space-between;align-items:center">
+                <span class="muted" style="display:flex;align-items:center;gap:4px"><span class="tri" style="${apiOpen?"transform:rotate(90deg)":""}"></span>API Cost</span>
+                <span style="font-weight:500">${fINR(r.apiCost)}</span>
+              </button>
+              ${apiOpen?`<div class="xs muted" style="margin-top:6px;padding-left:18px">${st.apis} × ${fINR(API_UNIT_COST)} per API</div>`:""}
+            </div>
+          </div>`:""}
+        </div>
+        <div class="opts" style="${compact?"grid-template-columns:1fr":""}">
+          ${optionsToRender.map(opt=>`
+            <div class="opt ${opt.recommended?"rec":""}">
+              ${opt.recommended?`<div class="badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>${compact?"Your Current Plan":"Recommended for You"}</div>`:""}
+              <div class="lbl">${compact?"Plan "+PLAN.code:opt.label}</div>
+              <div class="mc">Monthly Cost</div>
+              <div class="mv">${fINR(opt.monthlyCost)}</div>
+              <section>
+                <div class="toggle"><span style="display:flex;align-items:center;gap:6px"><span class="tri" style="transform:rotate(90deg)"></span><span class="muted">Product Cost</span><span class="tag-free">( Free Seg - ${fNum(opt.freeSegments)} )</span></span><span style="font-weight:500">${fINR(opt.productCost)}</span></div>
+                <div class="lns">${opt.productRows.map(rr=>`<div class="ln"><span class="muted">${esc(rr.label)}</span><span>${fINR(rr.cost)}</span></div>`).join("")}</div>
+              </section>
+              <section>
+                <div class="toggle"><span style="display:flex;align-items:center;gap:6px"><span class="tri" style="transform:rotate(90deg)"></span><span class="muted">Segment Cost</span></span><span style="font-weight:500">${fINR(opt.segmentCost)}</span></div>
+                <div class="lns">
+                  <div class="ln"><span class="muted">Segment</span><span>${fNum(opt.segments)}</span></div>
+                  <div class="ln"><span class="muted">Free Segments</span><span class="neg">− ${fNum(opt.freeSegments)}</span></div>
+                  <div class="add"><span class="muted">Add.Segment Cost</span><span class="muted xs">${opt.addSegments} × ₹${opt.perSegmentRate.toFixed(2)}</span><span style="text-align:right">${fINR(opt.segmentCost)}</span></div>
+                </div>
+              </section>
+              ${compact?`<div style="margin-top:14px;text-align:center;padding:10px;border-radius:12px;background:var(--green-soft);color:var(--green-deep);font-weight:600;font-size:13px">Current plan</div>`:`<button class="choose ${opt.recommended?"recb":"norm"}">${opt.recommended?"Choose Recommended Plan":"Choose Plan"}</button>`}
+            </div>`).join("")}
+        </div>
+      </div>
+    `;
+    // wire
+    if(!compact){
+      root.querySelector(".seg").oninput = e => { draft = e.target.value.replace(/[^\d]/g,""); e.target.value = draft; };
+      root.querySelector(".submit").onclick = () => { st.segments = Number(draft)||0; paint(); };
+      root.querySelector(".api-add").onclick = () => { st.apis++; paint(); };
+      const sub=root.querySelector(".api-sub"); if(sub) sub.onclick = () => { st.apis = Math.max(0,st.apis-1); paint(); };
+      root.querySelectorAll("[data-prod]").forEach(b=>b.onclick=()=>{ const p=b.dataset.prod; st.products = st.products.includes(p) ? st.products.filter(x=>x!==p) : [...st.products,p]; paint(); });
+      root.querySelectorAll("[data-addon]").forEach(b=>b.onchange=()=>{ const a=b.dataset.addon; st.addons = st.addons.includes(a) ? st.addons.filter(x=>x!==a) : [...st.addons,a]; paint(); });
+    }
+    root.querySelector("[data-toggle-one]").onclick = () => { oneOpen=!oneOpen; paint(); };
+    const ta=root.querySelector("[data-toggle-api]"); if(ta) ta.onclick = (e) => { e.stopPropagation(); apiOpen=!apiOpen; paint(); };
+  }
+  paint();
+}
+</script>
+</body>
+</html>
